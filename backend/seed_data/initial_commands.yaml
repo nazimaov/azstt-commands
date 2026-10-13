@@ -1,0 +1,65 @@
+# Начальный набор команд для управления музыкой (ТЗ п.6). Фразы — кандидаты, их
+# естественность нужно проверить с носителем азербайджанского языка перед массовым
+# сбором данных (ТЗ п.6, последний абзац).
+#
+# НЕОДНОЗНАЧНОСТЬ, требующая проверки: "Musiqini dayandır" (pause) построено от того же
+# корня "dayan-", что и "Dayan"/"Dayandır" (stop). Это разные действия (пауза vs полная
+# остановка) с похоже звучащими фразами — см. README.md, раздел "Известные ограничения".
+# Пока это зафиксировано как есть, без изменений кода.
+- code: play
+  title: "Воспроизведение"
+  phrases:
+    - "Musiqini başlat"
+    - "Başla"
+    - "Oxut"
+- code: pause
+  title: "Пауза"
+  phrases:
+    - "Pauza"
+    - "Fasilə ver"
+    - "Musiqini dayandır"
+- code: stop
+  title: "Полная остановка"
+  phrases:
+    - "Dayan"
+    - "Dayandır"
+    - "Stop"
+- code: resume
+  title: "Продолжение воспроизведения"
+  phrases:
+    - "Davam et"
+    - "Davam elə"
+- code: next
+  title: "Следующий трек"
+  phrases:
+    - "Növbəti mahnı"
+    - "Növbəti"
+    - "İrəli"
+- code: previous
+  title: "Предыдущий трек"
+  phrases:
+    - "Əvvəlki mahnı"
+    - "Əvvəlki"
+    - "Geri"
+- code: volume_up
+  title: "Увеличение громкости"
+  phrases:
+    - "Səsi artır"
+    - "Bir az artır"
+    - "Səsi qaldır"
+- code: volume_down
+  title: "Уменьшение громкости"
+  phrases:
+    - "Səsi azalt"
+    - "Bir az azalt"
+    - "Səsi aşağı sal"
+- code: mute
+  title: "Выключение звука"
+  phrases:
+    - "Səsi söndür"
+    - "Səssiz et"
+- code: unmute
+  title: "Включение звука"
+  phrases:
+    - "Səsi aç"
+    - "Səssiz rejimdən çıx"
