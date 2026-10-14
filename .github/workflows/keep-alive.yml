@@ -1,0 +1,20 @@
+name: Keep Render backend awake
+
+# Render's free web service tier spins down after ~15 minutes of inactivity, and the next
+# request then waits up to ~50s for a cold start. Pinging a lightweight endpoint often
+# enough prevents that — this does NOT fix the free tier's other limitation (no persistent
+# disk: a redeploy/restart still wipes data/azstt.db and the saved recordings — see
+# README.md's deployment section).
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backend health endpoint
+        run: |
+          curl -fsS --max-time 60 https://azstt-commands.onrender.com/api/health
