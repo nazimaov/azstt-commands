@@ -189,6 +189,13 @@ export function adminModerateRecording(token: string, recordingId: string, statu
   });
 }
 
+export function adminDeleteRecording(token: string, recordingId: string) {
+  return request<{ ok: boolean }>(`/api/admin/recordings/${recordingId}`, {
+    method: "DELETE",
+    headers: authHeaders(token),
+  });
+}
+
 export function adminRecordingAudioUrl(recordingId: string) {
   return `${API_BASE}/api/admin/recordings/${recordingId}/audio`;
 }

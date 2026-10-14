@@ -149,6 +149,22 @@ def build_admin_router(settings: Settings) -> APIRouter:
         db.commit()
         return {"ok": True, "status": recording.status}
 
+    @r.delete("/recordings/{recording_id}")
+    def delete_recording(recording_id: str, db: Session = Depends(get_db)):
+        """Permanently removes a recording: both audio files from disk (original and
+        converted, if present) and the DB row. Unlike moderation (PATCH, which only changes
+        status), this cannot be undone — for discarding genuinely unwanted data (e.g. test
+        recordings), not for routine rejection, which should use status=rejected instead."""
+        recording = db.get(Recording, recording_id)
+        if recording is None:
+            raise HTTPException(404, "Запись не найдена")
+        for path_str in (recording.original_path, recording.converted_path):
+            if path_str:
+                Path(path_str).unlink(missing_ok=True)
+        db.delete(recording)
+        db.commit()
+        return {"ok": True}
+
     @r.get("/recordings/{recording_id}/audio")
     def recording_audio(recording_id: str, db: Session = Depends(get_db)):
         recording = db.get(Recording, recording_id)

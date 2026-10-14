@@ -100,6 +100,9 @@ const dict = {
     "moderation.noRecordings": "Нет записей со статусом «{status}»",
     "moderation.participant": "участник",
     "moderation.exportError": "Не удалось экспортировать датасет",
+    "moderation.delete": "Удалить",
+    "moderation.deleteConfirm": "Удалить запись безвозвратно? Это действие нельзя отменить.",
+    "moderation.deleteError": "Не удалось удалить запись",
   },
   az: {
     "nav.commands": "Əmrlər",
@@ -192,6 +195,9 @@ const dict = {
     "moderation.noRecordings": "«{status}» statuslu qeyd yoxdur",
     "moderation.participant": "iştirakçı",
     "moderation.exportError": "Dataset ixrac edilə bilmədi",
+    "moderation.delete": "Sil",
+    "moderation.deleteConfirm": "Qeyd həmişəlik silinsin? Bu geri qaytarıla bilməz.",
+    "moderation.deleteError": "Qeydi silmək mümkün olmadı",
   },
 } satisfies Record<Lang, Record<string, string>>;
 

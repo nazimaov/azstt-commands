@@ -121,3 +121,45 @@ def test_recording_audio_downloadable_by_admin(client, tone_wav):
     r = client.get(f"/api/admin/recordings/{rec['id']}/audio", headers=ADMIN_HEADERS)
     assert r.status_code == 200
     assert len(r.content) > 0
+
+
+def test_delete_recording_removes_files_and_row(client, tone_wav):
+    participant_id = make_participant(client)
+    task = first_task(client)
+    rec = client.post(
+        "/api/recordings",
+        params={"participant_id": participant_id, "phrase_version_id": task["phrase_version_id"]},
+        files={"audio": ("rec.wav", tone_wav, "audio/wav")},
+    ).json()
+
+    admin_rows = client.get("/api/admin/recordings", headers=ADMIN_HEADERS).json()
+    row = next(r for r in admin_rows if r["id"] == rec["id"])
+    assert row  # sanity: it exists before delete
+
+    r = client.delete(f"/api/admin/recordings/{rec['id']}", headers=ADMIN_HEADERS)
+    assert r.status_code == 200
+    assert r.json()["ok"] is True
+
+    admin_rows_after = client.get("/api/admin/recordings", headers=ADMIN_HEADERS).json()
+    assert all(r["id"] != rec["id"] for r in admin_rows_after)
+
+    # Audio endpoint should 404 now that both the row and the files on disk are gone.
+    assert client.get(f"/api/admin/recordings/{rec['id']}/audio", headers=ADMIN_HEADERS).status_code == 404
+
+
+def test_delete_recording_not_found(client):
+    r = client.delete("/api/admin/recordings/no-such-id", headers=ADMIN_HEADERS)
+    assert r.status_code == 404
+
+
+def test_delete_recording_requires_admin_token(client, tone_wav):
+    participant_id = make_participant(client)
+    task = first_task(client)
+    rec = client.post(
+        "/api/recordings",
+        params={"participant_id": participant_id, "phrase_version_id": task["phrase_version_id"]},
+        files={"audio": ("rec.wav", tone_wav, "audio/wav")},
+    ).json()
+
+    r = client.delete(f"/api/admin/recordings/{rec['id']}")
+    assert r.status_code == 401

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AdminRecording, adminDownloadExport, adminListRecordings, adminModerateRecording, adminRecordingAudioUrl } from "../../api/client";
+import { AdminRecording, adminDeleteRecording, adminDownloadExport, adminListRecordings, adminModerateRecording, adminRecordingAudioUrl } from "../../api/client";
 import { useLang } from "../../lib/i18n";
 import { clearAdminToken, getAdminToken } from "../../lib/adminAuth";
 
@@ -52,6 +52,16 @@ export default function Moderation() {
     }
     await adminModerateRecording(adminToken, recordingId, newStatus, reason);
     reload();
+  }
+
+  async function handleDelete(recordingId: string) {
+    if (!window.confirm(t("moderation.deleteConfirm"))) return;
+    try {
+      await adminDeleteRecording(adminToken, recordingId);
+      reload();
+    } catch {
+      setError(t("moderation.deleteError"));
+    }
   }
 
   async function handleExport(exportStatus: string) {
@@ -109,6 +119,7 @@ export default function Moderation() {
               <button className="success" onClick={() => handleModerate(r.id, "approved")}>{t("moderation.approve")}</button>
               <button className="danger" onClick={() => handleModerate(r.id, "rejected")}>{t("moderation.reject")}</button>
               <button onClick={() => handleModerate(r.id, "needs_review")}>{t("moderation.needsReview")}</button>
+              <button className="danger" onClick={() => handleDelete(r.id)}>{t("moderation.delete")}</button>
             </div>
           </li>
         ))}

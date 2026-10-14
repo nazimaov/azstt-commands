@@ -4,6 +4,7 @@ backend/**/__pycache__/
 backend/.pytest_cache/
 .env
 data/
+exports/
 frontend/node_modules/
 frontend/dist/
 frontend/*.tsbuildinfo
