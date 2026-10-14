@@ -8,7 +8,11 @@ name: Keep Render backend awake
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    # Offset away from round minutes (:00, :10, :20...) on purpose — GitHub's own docs
+    # warn that schedules on popular round-number minutes get delayed or dropped under
+    # load, which is exactly what happened with the original "*/10 * * * *" (zero fires
+    # in ~2 hours, confirmed via `gh run list`). Odd offset minutes see far less traffic.
+    - cron: "7,17,27,37,47,57 * * * *"
   workflow_dispatch: {}
 
 jobs:
