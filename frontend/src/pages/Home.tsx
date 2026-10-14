@@ -1,17 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getStats, listRecordings, RecordingOut, Stats } from "../api/client";
+import { useLang } from "../lib/i18n";
 import { getStoredParticipantId, hasGivenConsent } from "../lib/participant";
-
-const STATUS_LABELS: Record<string, string> = {
-  pending: "Ожидает проверки",
-  approved: "Принята",
-  rejected: "Отклонена",
-  needs_review: "Требует проверки",
-};
 
 export default function Home() {
   const navigate = useNavigate();
+  const { t } = useLang();
   const [stats, setStats] = useState<Stats | null>(null);
   const [recordings, setRecordings] = useState<RecordingOut[]>([]);
 
@@ -29,33 +24,44 @@ export default function Home() {
 
   return (
     <main className="page">
-      <h1>AzSTT Commands</h1>
-      <p>
-        Сбор голосовых записей азербайджанских команд управления музыкой — для обучения
-        компактной офлайн-модели распознавания. Спасибо, что помогаете собрать данные!
-      </p>
+      <section className="hero">
+        <h1>AzSTT Commands</h1>
+        <p>{t("home.lead")}</p>
+        <button className="primary large" onClick={handleStart}>{t("home.start")}</button>
+      </section>
 
       {stats && (
-        <ul className="stats">
-          <li><strong>{stats.commands_count}</strong> доступных команд</li>
-          <li><strong>{stats.recordings_count}</strong> сохранённых записей</li>
-          <li><strong>{stats.pending_count}</strong> ожидают проверки</li>
-        </ul>
+        <div className="stat-grid">
+          <div className="stat-tile">
+            <span className="stat-value">{stats.commands_count}</span>
+            <span className="stat-label">{t("home.statCommands")}</span>
+          </div>
+          <div className="stat-tile">
+            <span className="stat-value">{stats.recordings_count}</span>
+            <span className="stat-label">{t("home.statRecordings")}</span>
+          </div>
+          <div className="stat-tile">
+            <span className="stat-value">{stats.pending_count}</span>
+            <span className="stat-label">{t("home.statPending")}</span>
+          </div>
+        </div>
       )}
 
-      <button className="primary" onClick={handleStart}>Начать запись</button>
-
       <p>
-        <Link to="/consent">Правила участия и согласие на обработку голосовых данных</Link>
+        <Link to="/consent">{t("home.rulesLink")}</Link>
       </p>
 
       {recordings.length > 0 && (
         <section>
-          <h2>Мои записи</h2>
+          <h2>{t("home.myRecordings")}</h2>
           <ul className="recordings-list">
             {recordings.map((r) => (
-              <li key={r.id}>
-                {new Date(r.created_at).toLocaleString("ru-RU")} — {STATUS_LABELS[r.status] ?? r.status}
+              <li key={r.id} className="recording-row">
+                <span>{new Date(r.created_at).toLocaleString("ru-RU")}</span>
+                <span className={`status-badge status-badge-${r.status}`}>
+                  <span className="status-dot" />
+                  {t(`status.${r.status}`)}
+                </span>
               </li>
             ))}
           </ul>

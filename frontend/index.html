@@ -7,6 +7,20 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Reverses 404.html's redirect (see that file / its comment) — restores the real
+      // deep-link path before React Router mounts, so e.g. refreshing /record on GitHub
+      // Pages lands back on /record instead of staying on the encoded redirect URL. A
+      // no-op everywhere else (query string never starts with "/?/" outside that redirect).
+      (function (l) {
+        if (l.search[1] === "/") {
+          var decoded = l.search.slice(1).split("&").map(function (s) {
+            return s.replace(/~and~/g, "&");
+          }).join("?");
+          window.history.replaceState(null, "", l.pathname.slice(0, -1) + decoded + l.hash);
+        }
+      })(window.location);
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

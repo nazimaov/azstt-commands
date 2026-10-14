@@ -52,6 +52,9 @@ def load_settings(env_file: Path = ENV_FILE) -> Settings:
         max_duration_sec=float(_env("AZSTT_MAX_DURATION_SEC", "8.0", env_file)),
         min_duration_sec=float(_env("AZSTT_MIN_DURATION_SEC", "0.2", env_file)),
         host=_env("AZSTT_HOST", "127.0.0.1", env_file),
-        port=int(_env("AZSTT_PORT", "8766", env_file)),
+        # `PORT` (no prefix) is the convention Render/Fly.io/Railway/Heroku all inject for
+        # the port the platform expects the process to bind — checked only as a fallback,
+        # after our own AZSTT_PORT, so local runs are unaffected.
+        port=int(_env("AZSTT_PORT", env_file=env_file) or os.environ.get("PORT") or "8766"),
         cors_origins=[o.strip() for o in cors.split(",") if o.strip()],
     )

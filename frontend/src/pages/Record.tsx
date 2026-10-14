@@ -1,19 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError, getTasks, PhraseTask, uploadRecording } from "../api/client";
+import { localizedCommandTitle, useLang } from "../lib/i18n";
 import { useRecorder } from "../lib/recorder";
 import { ensureParticipant, hasGivenConsent } from "../lib/participant";
 
-const STATE_LABELS: Record<string, string> = {
-  idle: "Готово к записи",
-  requesting: "Запрашиваем доступ к микрофону…",
-  recording: "Идёт запись…",
-  recorded: "Запись готова — прослушайте перед отправкой",
-  error: "Ошибка микрофона",
-};
-
 export default function Record() {
   const navigate = useNavigate();
+  const { t, lang } = useLang();
   const recorder = useRecorder();
 
   const [participantId, setParticipantId] = useState<string | null>(null);
@@ -31,10 +25,11 @@ export default function Record() {
     }
     ensureParticipant()
       .then(setParticipantId)
-      .catch(() => setLoadError("Не удалось зарегистрировать участника — проверьте соединение"));
+      .catch(() => setLoadError(t("record.loadErrorParticipant")));
     getTasks()
       .then((res) => setTasks(res.items))
-      .catch(() => setLoadError("Не удалось загрузить список фраз — проверьте соединение"));
+      .catch(() => setLoadError(t("record.loadErrorTasks")));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
   useEffect(() => {
@@ -51,20 +46,20 @@ export default function Record() {
     return (
       <main className="page">
         <p className="error">{loadError}</p>
-        <button onClick={() => window.location.reload()}>Повторить</button>
+        <button onClick={() => window.location.reload()}>{t("record.reloadBtn")}</button>
       </main>
     );
   }
 
   if (!tasks || participantId === null) {
-    return <main className="page"><p>Загрузка…</p></main>;
+    return <main className="page"><p>{t("record.loading")}</p></main>;
   }
 
   if (tasks.length === 0) {
     return (
       <main className="page">
-        <p>Пока нет доступных фраз для записи. Загляните позже.</p>
-        <Link to="/">На главную</Link>
+        <p>{t("record.noTasks")}</p>
+        <Link to="/">{t("record.backHome")}</Link>
       </main>
     );
   }
@@ -72,10 +67,10 @@ export default function Record() {
   if (index >= tasks.length) {
     return (
       <main className="page">
-        <h1>Все задания выполнены</h1>
-        <p>Спасибо за участие! Можете начать заново — порядок фраз будет перемешан.</p>
-        <button className="primary" onClick={() => setIndex(0)}>Начать снова</button>{" "}
-        <Link to="/">На главную</Link>
+        <h1>{t("record.allDoneTitle")}</h1>
+        <p>{t("record.allDoneText")}</p>
+        <button className="primary" onClick={() => setIndex(0)}>{t("record.restartBtn")}</button>{" "}
+        <Link to="/">{t("record.backHome")}</Link>
       </main>
     );
   }
@@ -92,7 +87,7 @@ export default function Record() {
       recorder.reset();
       setIndex((i) => i + 1);
     } catch (e) {
-      setSaveError(e instanceof ApiError ? e.message : "Не удалось сохранить запись — проверьте соединение и повторите");
+      setSaveError(e instanceof ApiError ? e.message : t("record.saveErrorFallback"));
     } finally {
       setSaving(false);
     }
@@ -106,38 +101,55 @@ export default function Record() {
 
   return (
     <main className="page">
-      <p className="progress">Задание {index + 1} из {tasks.length}</p>
-      <h1>{task.command_title}</h1>
-      <p className="phrase-text">{task.text}</p>
+      <div className="progress-track">
+        <div className="progress-fill" style={{ width: `${(index / tasks.length) * 100}%` }} />
+      </div>
+      <p className="progress-label">{t("record.progress", { i: index + 1, n: tasks.length })}</p>
 
-      <p className="status-indicator">{STATE_LABELS[recorder.state]}</p>
+      <div className="phrase-card">
+        <span className="command-tag">{localizedCommandTitle(lang, task.command_code, task.command_title)}</span>
+        <p className="phrase-text">{task.text}</p>
+      </div>
+
+      <div className={`status-badge status-${recorder.state}`}>
+        <span className="status-dot" />
+        {t(`record.state.${recorder.state}`)}
+      </div>
       {recorder.state === "error" && <p className="error">{recorder.error}</p>}
 
       <div className="record-controls">
-        {recorder.state === "idle" && <button className="primary" onClick={recorder.start}>Записать</button>}
-        {recorder.state === "recording" && <button className="primary" onClick={recorder.stop}>Остановить запись</button>}
-        {recorder.state === "error" && <button onClick={recorder.reset}>Повторить</button>}
-
-        {recorder.state === "recorded" && playbackUrl && (
-          <>
-            <audio src={playbackUrl} controls />
-            <div className="record-controls">
-              <button onClick={recorder.reset}>Перезаписать</button>
-              <button className="primary" disabled={saving} onClick={handleSave}>
-                {saving ? "Сохранение…" : "Сохранить и продолжить"}
-              </button>
-            </div>
-          </>
+        {recorder.state === "idle" && (
+          <button className="record-button" onClick={recorder.start}>
+            <span className="icon-dot" /> {t("record.recordBtn")}
+          </button>
         )}
+        {recorder.state === "recording" && (
+          <button className="record-button recording" onClick={recorder.stop}>
+            <span className="icon-square" /> {t("record.stopBtn")}
+          </button>
+        )}
+        {recorder.state === "error" && <button onClick={recorder.reset}>{t("record.retryMicBtn")}</button>}
       </div>
+
+      {recorder.state === "recorded" && playbackUrl && (
+        <div className="playback-card">
+          <audio src={playbackUrl} controls />
+          <div className="record-controls">
+            <button onClick={recorder.reset}>{t("record.rerecordBtn")}</button>
+            <button className="primary" disabled={saving} onClick={handleSave}>
+              {saving ? t("record.savingBtn") : t("record.saveBtn")}
+            </button>
+          </div>
+        </div>
+      )}
 
       {saveError && (
         <p className="error">
-          {saveError} <button onClick={handleSave}>Повторить отправку</button>
+          {saveError} <button onClick={handleSave}>{t("record.retrySendBtn")}</button>
         </p>
       )}
 
-      <p><button className="link-button" onClick={handleSkip}>Пропустить эту фразу</button></p>
+      <p><button className="link-button" onClick={handleSkip}>{t("record.skipBtn")}</button></p>
     </main>
   );
 }

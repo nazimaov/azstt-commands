@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AdminRecording, adminDownloadExport, adminListRecordings, adminModerateRecording, adminRecordingAudioUrl } from "../../api/client";
+import { useLang } from "../../lib/i18n";
 import { clearAdminToken, getAdminToken } from "../../lib/adminAuth";
 
 const STATUS_FILTERS = ["pending", "needs_review", "approved", "rejected"] as const;
 
 export default function Moderation() {
   const navigate = useNavigate();
+  const { t } = useLang();
   const token = getAdminToken();
 
   const [status, setStatus] = useState<string>("pending");
@@ -19,7 +21,7 @@ export default function Moderation() {
     try {
       setRecordings(await adminListRecordings(token, status));
     } catch {
-      setError("Не удалось загрузить записи");
+      setError(t("moderation.loadError"));
     }
   }
 
@@ -46,7 +48,7 @@ export default function Moderation() {
   async function handleModerate(recordingId: string, newStatus: string) {
     let reason: string | undefined;
     if (newStatus === "rejected") {
-      reason = window.prompt("Причина отклонения:") ?? undefined;
+      reason = window.prompt(t("moderation.rejectPrompt")) ?? undefined;
     }
     await adminModerateRecording(adminToken, recordingId, newStatus, reason);
     reload();
@@ -56,52 +58,63 @@ export default function Moderation() {
     try {
       await adminDownloadExport(adminToken, exportStatus);
     } catch {
-      setError("Не удалось экспортировать датасет");
+      setError(t("moderation.exportError"));
     }
   }
 
   return (
     <main className="page">
       <nav className="admin-nav">
-        <Link to="/admin/commands">Команды</Link>
-        <Link to="/admin/moderation">Модерация и экспорт</Link>
+        <Link to="/admin/commands">{t("nav.commands")}</Link>
+        <Link to="/admin/moderation">{t("nav.moderation")}</Link>
         <button className="link-button" onClick={() => { clearAdminToken(); navigate("/admin/login"); }}>
-          Выйти
+          {t("nav.logout")}
         </button>
       </nav>
 
-      <h1>Модерация записей</h1>
+      <h1>{t("moderation.title")}</h1>
       {error && <p className="error">{error}</p>}
 
       <section className="admin-card">
-        <h2>Экспорт датасета</h2>
-        {["approved", "pending", "rejected", "needs_review"].map((s) => (
-          <button key={s} onClick={() => handleExport(s)}>Экспорт: {s}</button>
-        ))}
+        <h2>{t("moderation.exportTitle")}</h2>
+        <div className="export-buttons">
+          {["approved", "pending", "rejected", "needs_review"].map((s) => (
+            <button key={s} onClick={() => handleExport(s)}>{t("moderation.exportBtn", { status: t(`status.${s}`) })}</button>
+          ))}
+        </div>
       </section>
 
       <label>
-        Статус:{" "}
+        {t("admin.status")}{" "}
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
-          {STATUS_FILTERS.map((s) => <option key={s} value={s}>{s}</option>)}
+          {STATUS_FILTERS.map((s) => <option key={s} value={s}>{t(`status.${s}`)}</option>)}
         </select>
       </label>
 
       <ul className="recordings-list">
         {recordings.map((r) => (
           <li key={r.id} className="admin-card">
-            <div><strong>{r.command_code}</strong> — «{r.text}»</div>
-            <div>участник {r.participant_id.slice(0, 8)}…, {r.duration_sec.toFixed(2)} с, {new Date(r.created_at).toLocaleString("ru-RU")}</div>
-            {r.rejection_reason && <div>Причина отклонения: {r.rejection_reason}</div>}
-            {audioUrls[r.id] ? <audio src={audioUrls[r.id]} controls /> : <button onClick={() => handleLoadAudio(r.id)}>Загрузить и прослушать</button>}
-            <div>
-              <button onClick={() => handleModerate(r.id, "approved")}>Принять</button>
-              <button onClick={() => handleModerate(r.id, "rejected")}>Отклонить</button>
-              <button onClick={() => handleModerate(r.id, "needs_review")}>На доп. проверку</button>
+            <div className="recording-head">
+              <strong>«{r.text}»</strong>
+              <span className="command-tag">{r.command_code}</span>
+            </div>
+            <div className="recording-meta">
+              {t("moderation.participant")} {r.participant_id.slice(0, 8)}… · {r.duration_sec.toFixed(2)} с · {new Date(r.created_at).toLocaleString("ru-RU")}
+            </div>
+            {r.rejection_reason && (
+              <div className="error">{t("moderation.rejectionReason", { reason: r.rejection_reason })}</div>
+            )}
+            {audioUrls[r.id] ? <audio src={audioUrls[r.id]} controls /> : <button onClick={() => handleLoadAudio(r.id)}>{t("moderation.loadAudio")}</button>}
+            <div className="moderation-actions">
+              <button className="success" onClick={() => handleModerate(r.id, "approved")}>{t("moderation.approve")}</button>
+              <button className="danger" onClick={() => handleModerate(r.id, "rejected")}>{t("moderation.reject")}</button>
+              <button onClick={() => handleModerate(r.id, "needs_review")}>{t("moderation.needsReview")}</button>
             </div>
           </li>
         ))}
-        {recordings.length === 0 && <p>Нет записей со статусом «{status}»</p>}
+        {recordings.length === 0 && (
+          <p className="empty-note">{t("moderation.noRecordings", { status: t(`status.${status}`) })}</p>
+        )}
       </ul>
     </main>
   );

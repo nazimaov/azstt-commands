@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>AzSTT Commands</title>
+    <script>
+      // SPA fallback for GitHub Pages (static hosting has no server-side routing): a deep
+      // link like /azstt-commands/record has no matching file, so Pages serves this
+      // 404.html — redirect to the app root with the original path encoded in the query
+      // string (the spa-github-pages technique: https://github.com/rafgraph/spa-github-pages).
+      // index.html's own inline script reverses this via history.replaceState before React
+      // Router mounts, so the user never sees the redirect. Not used by the single-process
+      // deployment (backend/app/main.py already serves index.html for any unmatched path).
+      var pathSegmentsToKeep = 1; // "/<repo-name>" — keep this in sync with vite.config.ts's VITE_BASE_PATH
+      var l = window.location;
+      l.replace(
+        l.protocol + "//" + l.hostname + (l.port ? ":" + l.port : "") +
+        l.pathname.split("/").slice(0, 1 + pathSegmentsToKeep).join("/") + "/?/" +
+        l.pathname.slice(1).split("/").slice(pathSegmentsToKeep).join("/").replace(/&/g, "~and~") +
+        (l.search ? "&" + l.search.slice(1).replace(/&/g, "~and~") : "") +
+        l.hash
+      );
+    </script>
+  </head>
+  <body></body>
+</html>

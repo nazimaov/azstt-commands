@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { adminAddPhrase, adminCreateCommand, adminListCommands, adminUpdateCommand, adminUpdatePhrase, Command } from "../../api/client";
+import { useLang } from "../../lib/i18n";
 import { clearAdminToken, getAdminToken } from "../../lib/adminAuth";
 
 const STATUS_OPTIONS = ["active", "disabled", "archived"] as const;
 
 export default function CommandsAdmin() {
   const navigate = useNavigate();
+  const { t } = useLang();
   const token = getAdminToken();
 
   const [commands, setCommands] = useState<Command[]>([]);
@@ -21,7 +23,7 @@ export default function CommandsAdmin() {
     try {
       setCommands(await adminListCommands(token));
     } catch {
-      setError("Не удалось загрузить команды");
+      setError(t("admin.loadError"));
     }
   }
 
@@ -49,7 +51,7 @@ export default function CommandsAdmin() {
       setNewPhrases("");
       reload();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Не удалось создать команду");
+      setError(e instanceof Error ? e.message : t("admin.createError"));
     }
   }
 
@@ -72,7 +74,7 @@ export default function CommandsAdmin() {
   }
 
   async function handleEditPhraseText(phraseId: string, currentText: string | null) {
-    const text = window.prompt("Новый текст фразы (создаст новую версию):", currentText ?? "");
+    const text = window.prompt(t("admin.editPromptLabel"), currentText ?? "");
     if (!text || text === currentText) return;
     await adminUpdatePhrase(adminToken, phraseId, { text });
     reload();
@@ -81,59 +83,73 @@ export default function CommandsAdmin() {
   return (
     <main className="page">
       <nav className="admin-nav">
-        <Link to="/admin/commands">Команды</Link>
-        <Link to="/admin/moderation">Модерация и экспорт</Link>
+        <Link to="/admin/commands">{t("nav.commands")}</Link>
+        <Link to="/admin/moderation">{t("nav.moderation")}</Link>
         <button className="link-button" onClick={() => { clearAdminToken(); navigate("/admin/login"); }}>
-          Выйти
+          {t("nav.logout")}
         </button>
       </nav>
 
-      <h1>Управление командами</h1>
+      <h1>{t("admin.title")}</h1>
       {error && <p className="error">{error}</p>}
 
       <section className="admin-card">
-        <h2>Новая команда</h2>
-        <input placeholder="код (например volume_up)" value={newCode} onChange={(e) => setNewCode(e.target.value)} />
-        <input placeholder="название" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
+        <h2>{t("admin.newCommand")}</h2>
+        <input placeholder={t("admin.codePlaceholder")} value={newCode} onChange={(e) => setNewCode(e.target.value)} />
+        <input placeholder={t("admin.titlePlaceholder")} value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
         <textarea
-          placeholder="фразы, по одной на строку"
+          placeholder={t("admin.phrasesPlaceholder")}
           value={newPhrases}
           onChange={(e) => setNewPhrases(e.target.value)}
         />
         <button className="primary" disabled={!newCode || !newTitle} onClick={handleCreateCommand}>
-          Добавить команду
+          {t("admin.addCommand")}
         </button>
       </section>
 
       {commands.map((command) => (
         <section key={command.id} className="admin-card">
-          <h2>{command.title} <code>{command.code}</code></h2>
+          <div className="command-header">
+            <h2>{command.title} <code>{command.code}</code></h2>
+            <span className={`status-badge status-badge-command-${command.status}`}>
+              <span className="status-dot" />
+              {t(`status.${command.status}`)}
+            </span>
+          </div>
           <label>
-            Статус:{" "}
+            {t("admin.status")}{" "}
             <select value={command.status} onChange={(e) => handleStatusChange(command.id, e.target.value)}>
-              {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+              {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{t(`status.${s}`)}</option>)}
             </select>
           </label>
 
           <ul className="phrase-list">
             {command.phrases.map((phrase) => (
-              <li key={phrase.id}>
-                <span className={phrase.enabled ? "" : "phrase-disabled"}>{phrase.current_text}</span>
-                {" "}— {phrase.recordings_count} записей (версий: {phrase.versions.length})
-                <button onClick={() => handleEditPhraseText(phrase.id, phrase.current_text)}>Изменить текст</button>
-                <button onClick={() => handleTogglePhrase(phrase.id, !phrase.enabled)}>
-                  {phrase.enabled ? "Отключить" : "Включить"}
-                </button>
+              <li key={phrase.id} className="phrase-row">
+                <div>
+                  <span className={phrase.enabled ? "" : "phrase-disabled"}>{phrase.current_text}</span>
+                  <span className="phrase-meta">
+                    {t("admin.recordingsCount", { n: phrase.recordings_count, v: phrase.versions.length })}
+                  </span>
+                </div>
+                <div className="phrase-actions">
+                  <button onClick={() => handleEditPhraseText(phrase.id, phrase.current_text)}>{t("admin.editText")}</button>
+                  <button onClick={() => handleTogglePhrase(phrase.id, !phrase.enabled)}>
+                    {phrase.enabled ? t("admin.disable") : t("admin.enable")}
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
 
-          <input
-            placeholder="новая фраза"
-            value={newPhraseByCommand[command.id] || ""}
-            onChange={(e) => setNewPhraseByCommand((s) => ({ ...s, [command.id]: e.target.value }))}
-          />
-          <button onClick={() => handleAddPhrase(command.id)}>Добавить фразу</button>
+          <div className="inline-form">
+            <input
+              placeholder={t("admin.newPhrasePlaceholder")}
+              value={newPhraseByCommand[command.id] || ""}
+              onChange={(e) => setNewPhraseByCommand((s) => ({ ...s, [command.id]: e.target.value }))}
+            />
+            <button onClick={() => handleAddPhrase(command.id)}>{t("admin.addPhrase")}</button>
+          </div>
         </section>
       ))}
     </main>

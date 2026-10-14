@@ -1,4 +1,11 @@
 // Typed client for the AzSTT Commands backend API (../../backend/app/routers/*.py).
+//
+// API_BASE lets the frontend be built against a backend on a different origin — e.g.
+// the frontend deployed to GitHub Pages (static only) calling a backend on Render/Fly.io.
+// Empty by default, which keeps same-origin requests working exactly as before for local
+// dev and for the single-process deployment where the backend serves the built frontend
+// itself (app/main.py's StaticFiles mount) — see azstt-commands/README.md.
+const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 
 export interface PhraseTask {
   phrase_version_id: string;
@@ -74,7 +81,7 @@ class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, init);
+  const res = await fetch(API_BASE + path, init);
   if (!res.ok) {
     let detail = res.statusText;
     try {
@@ -183,11 +190,11 @@ export function adminModerateRecording(token: string, recordingId: string, statu
 }
 
 export function adminRecordingAudioUrl(recordingId: string) {
-  return `/api/admin/recordings/${recordingId}/audio`;
+  return `${API_BASE}/api/admin/recordings/${recordingId}/audio`;
 }
 
 export async function adminDownloadExport(token: string, status: string): Promise<void> {
-  const res = await fetch(`/api/admin/export?status=${encodeURIComponent(status)}`, { headers: authHeaders(token) });
+  const res = await fetch(`${API_BASE}/api/admin/export?status=${encodeURIComponent(status)}`, { headers: authHeaders(token) });
   if (!res.ok) throw new ApiError(res.status, res.statusText);
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);

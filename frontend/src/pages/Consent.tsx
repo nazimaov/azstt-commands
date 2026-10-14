@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { giveConsent } from "../api/client";
+import { useLang } from "../lib/i18n";
 import { ensureParticipant, markConsentGiven } from "../lib/participant";
 
 const TERMS_VERSION = "v1";
 
 export default function Consent() {
   const navigate = useNavigate();
+  const { t } = useLang();
   const [collection, setCollection] = useState(false);
   const [trainingUse, setTrainingUse] = useState(true);
   const [publicDistribution, setPublicDistribution] = useState(false);
@@ -27,7 +29,7 @@ export default function Consent() {
       markConsentGiven();
       navigate("/record");
     } catch {
-      setError("Не удалось сохранить согласие — проверьте соединение и попробуйте снова");
+      setError(t("consent.error"));
     } finally {
       setBusy(false);
     }
@@ -35,39 +37,35 @@ export default function Consent() {
 
   return (
     <main className="page">
-      <h1>Правила участия</h1>
-      <p>
-        Мы записываем короткие голосовые фразы для создания набора данных, по которому в
-        будущем будет обучена офлайн-модель распознавания азербайджанских голосовых команд
-        управления музыкой. Запись не содержит вашего имени — участник идентифицируется
-        случайным кодом, без каких-либо личных данных.
-      </p>
-      <p>
-        Вы можете в любой момент прекратить участие. Запросить удаление уже сохранённых
-        записей можно, обратившись к организатору проекта.
-      </p>
+      <h1>{t("consent.title")}</h1>
+      <div className="info-card">
+        <p>{t("consent.p1")}</p>
+        <p>{t("consent.p2")}</p>
+      </div>
 
-      <label className="checkbox-row">
-        <input type="checkbox" checked={collection} onChange={(e) => setCollection(e.target.checked)} />
-        Я согласен(на) на запись и сбор моего голоса для этого проекта (обязательно)
-      </label>
-      <label className="checkbox-row">
-        <input type="checkbox" checked={trainingUse} onChange={(e) => setTrainingUse(e.target.checked)} />
-        Разрешаю использовать мои записи для обучения модели распознавания речи
-      </label>
-      <label className="checkbox-row">
-        <input
-          type="checkbox"
-          checked={publicDistribution}
-          onChange={(e) => setPublicDistribution(e.target.checked)}
-        />
-        Разрешаю публичное распространение набора данных, включающего мои записи
-      </label>
+      <div className="consent-options">
+        <label className="checkbox-row">
+          <input type="checkbox" checked={collection} onChange={(e) => setCollection(e.target.checked)} />
+          <span>{t("consent.collection")} <em>{t("consent.collectionRequired")}</em></span>
+        </label>
+        <label className="checkbox-row">
+          <input type="checkbox" checked={trainingUse} onChange={(e) => setTrainingUse(e.target.checked)} />
+          <span>{t("consent.training")}</span>
+        </label>
+        <label className="checkbox-row">
+          <input
+            type="checkbox"
+            checked={publicDistribution}
+            onChange={(e) => setPublicDistribution(e.target.checked)}
+          />
+          <span>{t("consent.publicDist")}</span>
+        </label>
+      </div>
 
       {error && <p className="error">{error}</p>}
 
-      <button className="primary" disabled={!collection || busy} onClick={handleSubmit}>
-        Принять и продолжить
+      <button className="primary large" disabled={!collection || busy} onClick={handleSubmit}>
+        {t("consent.submit")}
       </button>
     </main>
   );
